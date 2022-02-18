@@ -1,7 +1,6 @@
 # EZXT
 
 ### Open source & beginner-friendly ccxt wrapped client for binance & ftx
-- [Français](https://github.com/Shaft-3796/EZXT/blob/master/README-FRA.md)
 
 <br>
 

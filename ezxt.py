@@ -34,43 +34,43 @@ class Client:
         self.client.load_markets()
 
     # Return bid market price of an asset
-    def get_bid(self, symbol):
+    def get_bid(self, market):
         self.exchange.load_markets()
-        return self.exchange.fetch_ticker(symbol)["bid"]
+        return self.exchange.fetch_ticker(market)["bid"]
 
     # Return ask market price of an asset
-    def get_ask(self, symbol):
+    def get_ask(self, market):
         self.exchange.load_markets()
-        return self.exchange.fetch_ticker(symbol)["ask"]
+        return self.exchange.fetch_ticker(market)["ask"]
 
     # Post a market order
-    def post_market_order(self, symbol, side, amount):
+    def post_market_order(self, market, side, amount):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(symbol=symbol, type='market', side=side, amount=amount)
+        return self.exchange.create_order(market=market, type='market', side=side, amount=amount)
 
     # Post a market order
-    def post_limit_order(self, symbol, side, amount, price):
+    def post_limit_order(self, market, side, amount, price):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_limit_order(symbol=symbol, side=side, amount=amount, price=price)
+        return self.exchange.create_limit_order(market=market, side=side, amount=amount, price=price)
 
     # Post a stop order
-    def post_stop(self, symbol, amount, price):
+    def post_stop(self, market, amount, price):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(symbol=symbol, type='stop', side="sell", amount=amount,
+        return self.exchange.create_order(market=market, type='stop', side="sell", amount=amount,
                                           params={"stopPrice": price})
 
     # Post a tp order
-    def post_take_profit(self, symbol, amount, price):
+    def post_take_profit(self, market, amount, price):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(symbol=symbol, type='takeProfit', side="sell", amount=amount,
+        return self.exchange.create_order(market=market, type='takeProfit', side="sell", amount=amount,
                                           params={"triggerPrice": price})
 
     # Cancel and order
@@ -84,16 +84,16 @@ class Client:
                                           {'method': 'privateDeleteOrdersOrderId'})
 
     # Return available balance of an asset
-    def get_free_balance(self, symbol):
+    def get_free_balance(self, market):
         self.exchange.load_markets()
         balances = self.exchange.fetch_balance()
-        balance = balances.get(symbol, {})
+        balance = balances.get(market, {})
         free = balance.get('free', 0)
         return free
 
     # Return klines as a dataframe of an asset
-    def get_klines(self, symbol, interval, limit=100):
-        klines = self.exchange.fetch_ohlcv(symbol, interval, limit=limit)
+    def get_klines(self, market, interval, limit=100):
+        klines = self.exchange.fetch_ohlcv(market, interval, limit=limit)
         dataframe = pd.DataFrame(klines)
         dataframe.rename(columns={0: 'timestamp', 1: 'open', 2: 'high', 3: 'low', 4: 'close'}, inplace=True)
         dataframe.pop(5)
@@ -101,16 +101,18 @@ class Client:
         return dataframe
 
     # Get market information
-    def get_market(self, symbol):
-        return self.exchange.market(symbol)
+    def get_market(self, market):
+        return self.exchange.market(market)
 
     # Get market precision
-    def get_precision(self, symbol):
-        market = self.get_market(symbol)
+    def get_precision(self, market):
+        market = self.get_market(market)
         return market["precision"]["amount"], market["limits"]["amount"]["min"]
 
     # Calculate the size of a buy position
-    def get_buy_size(self, coin, pair, amount, price=None, free_currency_balance=None):
+    def get_buy_size(self, market, amount, price=None, free_currency_balance=None):
+
+        coin = market.split("/")[1]
 
         # get free balance
         if free_currency_balance is None:
@@ -120,13 +122,13 @@ class Client:
         amount = (amount * float(free_currency_balance)) / 100
 
         # get precision & limit (minimum amount)
-        precision, limit = self.get_precision(pair)
+        precision, limit = self.get_precision(market)
 
         digits = int(math.sqrt((int(math.log10(precision)) + 1) ** 2)) + 1
 
         # get price
         if price is None:
-            price = self.get_ask(pair)
+            price = self.get_ask(market)
 
         amount /= price
 
@@ -140,17 +142,19 @@ class Client:
         return amount
 
     # Calculate the size of a sell position
-    def get_sell_size(self, symbol, pair, amount, free_token_balance=None):
+    def get_sell_size(self, market, amount, free_token_balance=None):
+
+        market = market.split("/")[0]
 
         # get free balance
         if free_token_balance is None:
-            free_token_balance = self.get_free_balance(symbol)
+            free_token_balance = self.get_free_balance(market)
 
         # apply percentage
         amount = (amount * float(free_token_balance)) / 100
 
         # get precision & limit (minimum amount)
-        precision, limit = self.get_precision(pair)
+        precision, limit = self.get_precision(market)
 
         digits = int(math.sqrt((int(math.log10(precision)) + 1) ** 2)) + 1
 
@@ -164,23 +168,19 @@ class Client:
         return amount
 
     # Get an order
-    def get_order(self, order, order_id=None):
-        if order_id is None:
-            order_id = order["info"]["id"]
+    def get_order(self, order_id):
         return self.exchange.fetch_order(order_id, None, {'method': 'privateGetOrdersOrderId'})
 
     # Get all orders
-    def get_all_orders(self, symbol=None, open_only=True):
+    def get_all_orders(self, market=None, open_only=True):
         if open_only:
-            return self.exchange.fetch_open_orders(symbol=symbol)
+            return self.exchange.fetch_open_orders(market=market)
         else:
-            return self.exchange.fetch_orders(symbol=symbol)
+            return self.exchange.fetch_orders(market=market)
 
     # Return the status of an order
-    def get_order_status(self, order, order_id=None):
-        if order_id is None:
-            order_id = order["info"]["id"]
-            order = self.exchange.fetch_order(order_id, None, {'method': 'privateGetOrdersOrderId'})
+    def get_order_status(self, order_id):
+        order = self.exchange.fetch_order(order_id, None, {'method': 'privateGetOrdersOrderId'})
 
         if order["info"]["remaining"] == 0:
             return "filled"

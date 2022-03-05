@@ -10,7 +10,7 @@ class Client:
     def __init__(self, exchange, api_key=None, api_secret=None, subaccount=None):
         self.exchange = exchange
 
-        # Initializing with FTX or Binance
+        # Initializing with FTX to support subaccount or another exchange
         if api_key is not None and api_secret is not None:
             # With FTX
             if subaccount is not None and exchange == ccxt.ftx:
@@ -20,14 +20,14 @@ class Client:
                     'enableRateLimit': True,
                     'headers': {'FTX-SUBACCOUNT': subaccount}
                 })
-            # With Binance
+            # With Another
             else:
                 self.client = exchange({
                     'apiKey': api_key,
                     'secret': api_secret,
                     'enableRateLimit': True
                 })
-        # With ftx or binance without authentication
+        # Without authentication
         else:
             self.client = exchange()
 

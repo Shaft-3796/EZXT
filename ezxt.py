@@ -1,3 +1,11 @@
+import math
+import pandas as pd
+import ccxt
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# A ccxt wrapped client for binance & ftx. Made with <3 by Shaft
+# ----------------------------------------------------------------------------------------------------------------------
 class Client:
     def __init__(self, exchange, api_key=None, api_secret=None, subaccount=None, testnet=False):
         self.exchange = exchange
@@ -83,11 +91,19 @@ class Client:
             return self.exchange.cancel_order(order["info"]["orderId"], market)
 
     # Return available balance of an asset
-    def get_free_balance(self, market):
+    def get_free_balance(self, token):
         self.exchange.load_markets()
         balances = self.exchange.fetch_balance()
-        balance = balances.get(market, {})
+        balance = balances.get(token, {})
         free = balance.get('free', 0)
+        return free
+
+    # Return available balance of an asset
+    def get_balance(self, token):
+        self.exchange.load_markets()
+        balances = self.exchange.fetch_balance()
+        balance = balances.get(token, {})
+        free = balance.get('total', 0)
         return free
 
     # Return klines as a dataframe of an asset

@@ -71,19 +71,29 @@ client.post_stop(market, side, amount, price)
 
 ####  cancel_order
 ```python
-client.cancel_order(order)
+client.cancel_order(order, market)
 ```
 ##### Required parameters:
 - order: the order you want to cancel as a dict returned by get_order or get_all_orders methods.
+- market: the market you want to post an order for as a string. Example: "BTC/USDT"
 
 ---
 
 ####  get_free_balance
 ```python
-client.get_free_balance(market)
+client.get_free_balance(token)
 ```
 ##### Required parameters:
-- market: the market you want to get the free balance for as a string. Example: "BTC/USDT"
+- token: the token you want to get the free balance for as a string. Example: "BTC"
+
+---
+
+####  get_balance
+```python
+client.get_free_balance(token)
+```
+##### Required parameters:
+- token: the token you want to get the free balance for as a string. Example: "BTC"
 
 ---
 
@@ -147,10 +157,11 @@ you enter 50 it will return approximately 500
 
 ### get_order return the order you want
 ```python
-client.get_order(order_id)
+client.get_order(order_id, market)
 ```
 ##### Required parameters:
 - order_id: the id of the order you want to get as an int.
+- market: the market you want to get the orders for as a string. Example: "BTC/USDT".
 
 ---
 
@@ -166,10 +177,11 @@ client.get_all_orders()
 
 ### get_order_status return the status of your order, canceled, filled, or open
 ```python
-client.get_order_status(order_id)
+client.get_order_status(order_id, market)
 ```
 ##### Required parameters:
 - order_id: the id of the order you want to get as an int.
+- market: the market you want to get the orders for as a string. Example: "BTC/USDT".
 
 ---
 

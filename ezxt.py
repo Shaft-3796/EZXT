@@ -1,20 +1,12 @@
-import math
-import ccxt
-import pandas as pd
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# A ccxt wrapped client for binance & ftx. Made with <3 by Shaft
-# ----------------------------------------------------------------------------------------------------------------------
 class Client:
-    def __init__(self, exchange, api_key=None, api_secret=None, subaccount=None):
+    def __init__(self, exchange, api_key=None, api_secret=None, subaccount=None, testnet=False):
         self.exchange = exchange
 
         # Initializing with FTX to support subaccount or another exchange
         if api_key is not None and api_secret is not None:
             # With FTX
             if subaccount is not None and exchange == ccxt.ftx:
-                self.client = exchange({
+                self.exchange = exchange({
                     'apiKey': api_key,
                     'secret': api_secret,
                     'enableRateLimit': True,
@@ -22,16 +14,18 @@ class Client:
                 })
             # With Another
             else:
-                self.client = exchange({
+                self.exchange = exchange({
                     'apiKey': api_key,
                     'secret': api_secret,
                     'enableRateLimit': True
                 })
+                if testnet:
+                    self.exchange.set_sandbox_mode(True)
         # Without authentication
         else:
-            self.client = exchange()
+            self.exchange = exchange()
 
-        self.client.load_markets()
+        self.exchange.load_markets()
 
     # Return bid market price of an asset
     def get_bid(self, market):

@@ -42,40 +42,45 @@ class Client:
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(market=market, type='market', side=side, amount=amount)
+        return self.exchange.create_order(symbolt=market, type='market', side=side, amount=amount)
 
     # Post a market order
     def post_limit_order(self, market, side, amount, price):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_limit_order(market=market, side=side, amount=amount, price=price)
+        return self.exchange.create_limit_order(symbol=market, side=side, amount=amount, price=price)
 
     # Post a stop order
-    def post_stop(self, market, amount, price):
+    def post_stop(self, market, side, amount, price):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(market=market, type='stop', side="sell", amount=amount,
+        return self.exchange.create_order(symbol=market, type='stop', side=side, amount=amount,
                                           params={"stopPrice": price})
 
     # Post a tp order
-    def post_take_profit(self, market, amount, price):
+    def post_take_profit(self, market, side, amount, price):
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(market=market, type='takeProfit', side="sell", amount=amount,
+        return self.exchange.create_order(symbol=market, type='takeProfit', side=side, amount=amount,
                                           params={"triggerPrice": price})
 
-    # Cancel and order
-    def cancel_order(self, order):
-        order_type = order['info']['type']
-        if order_type == "stop" or order_type == "take_profit":
-            return self.exchange.cancel_order(order["info"]["id"], None,
-                                              {'method': 'privateDeleteConditionalOrdersOrderId'})
+    # Cancel an order
+    def cancel_order(self, order, market):
+        if type(order) is str:
+            order = self.get_order(order, market)
 
-        return self.exchange.cancel_order(order["info"]["id"], None,
-                                          {'method': 'privateDeleteOrdersOrderId'})
+        order_type = order['info']['type']
+        if isinstance(self.exchange, ccxt.ftx):
+            if order_type == "stop" or order_type == "take_profit":
+                return self.exchange.cancel_order(order["info"]["orderId"], market,
+                                              {'method': 'privateDeleteConditionalOrdersOrderId'})
+            else:
+                return self.exchange.cancel_order(order["info"]["orderId"], market, {'method': 'privateDeleteOrdersOrderId'})
+        else:
+            return self.exchange.cancel_order(order["info"]["orderId"], market)
 
     # Return available balance of an asset
     def get_free_balance(self, market):
@@ -162,19 +167,22 @@ class Client:
         return amount
 
     # Get an order
-    def get_order(self, order_id):
-        return self.exchange.fetch_order(order_id, None, {'method': 'privateGetOrdersOrderId'})
+    def get_order(self, order_id, market):
+        if isinstance(self.exchange, ccxt.ftx):
+            return self.exchange.fetch_order(order_id, market, {'method': 'privateGetOrdersOrderId'})
+        else:
+            return self.exchange.fetch_order(order_id, market)
 
     # Get all orders
     def get_all_orders(self, market=None, open_only=True):
         if open_only:
-            return self.exchange.fetch_open_orders(market=market)
+            return self.exchange.fetch_open_orders(symbol=market)
         else:
-            return self.exchange.fetch_orders(market=market)
+            return self.exchange.fetch_orders(symbol=market)
 
     # Return the status of an order
-    def get_order_status(self, order_id):
-        order = self.exchange.fetch_order(order_id, None, {'method': 'privateGetOrdersOrderId'})
+    def get_order_status(self, order_id, market):
+        order = self.get_order(order_id, market)
 
         if order["info"]["remaining"] == 0:
             return "filled"

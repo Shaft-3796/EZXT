@@ -50,7 +50,7 @@ class Client:
         # return if order size is 0
         if amount == 0:
             return False
-        return self.exchange.create_order(symbolt=market, type='market', side=side, amount=amount)
+        return self.exchange.create_order(symbol=market, type='market', side=side, amount=amount)
 
     # Post a market order
     def post_limit_order(self, market, side, amount, price):

@@ -1,5 +1,7 @@
 # EZXT
 
+📢This project is being reworked, it will allow an implementation of all available exchanges on CCXT and the acces of perp market ( only if the feature is implemented by CCXT ).
+
 ### Open source & beginner-friendly ccxt wrapped client for binance & ftx
 
 <br>

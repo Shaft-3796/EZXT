@@ -233,9 +233,9 @@ class WrappedGenericExchange:
         return int(self.client.fetch_ticker(market, params=params)["ask"])
 
     @only_implemented_types
-    def get_klines(self, market: str, timeframe: str, limit: int, params: (dict, NoneType) = None) -> pd.DataFrame:
+    def get_kline(self, market: str, timeframe: str, limit: int, params: (dict, NoneType) = None) -> pd.DataFrame:
         """
-        Download klines for a market
+        Download kline for a market
         :param market: example "ETH/USD"
         :param timeframe: usually '1y', '1m', '1d', '1w', '1h'...
         :param limit: number of candles
@@ -244,24 +244,21 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        klines = self.exchange.fetch_ohlcv(market, timeframe, limit=limit, params=params)
-        dataframe = pd.DataFrame(klines)
+        kline = self.client.fetch_ohlcv(market, timeframe, limit=limit, params=params)
+        dataframe = pd.DataFrame(kline)
         dataframe.rename(columns={0: 'timestamp', 1: 'open', 2: 'high', 3: 'low', 4: 'close'}, inplace=True)
         dataframe.pop(5)
         dataframe.drop(index=dataframe.index[-1], axis=0, inplace=True)
         return dataframe
 
     @only_implemented_types
-    def get_market(self, market: str, params: (dict, NoneType) = None) -> dict:
+    def get_market(self, market: str) -> dict:
         """
         Get some market information
         :param market: example "ETH/USD"
-        :param params: additional parameters
         :return:
         """
-        if params is None:
-            params = {}
-        return self.exchange.market(market, params=params)
+        return self.client.market(market)
 
     @only_implemented_types
     def get_precision(self, market: str, params: (dict, NoneType) = None) -> tuple[float, float]:
@@ -273,7 +270,7 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        market = self.get_market(market, params=params)
+        market = self.get_market(market)
         return float(market["precision"]["amount"]), float(market["limits"]["amount"]["min"])
 
     # Private API
@@ -337,7 +334,7 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        return self.exchange.fetch_orders(symbol=market, params=params)
+        return self.client.fetch_orders(symbol=market, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -350,7 +347,7 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        return self.exchange.fetch_open_orders(symbol=market, params=params)
+        return self.client.fetch_open_orders(symbol=market, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -365,7 +362,7 @@ class WrappedGenericExchange:
 
         if params is None:
             params = {}
-        return self.exchange.cancel_order(order_id, market, params=params)
+        return self.client.cancel_order(order_id, market, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -380,7 +377,7 @@ class WrappedGenericExchange:
 
         if params is None:
             params = {}
-        return self.exchange.cancel_order(order["info"]["orderId"], market, params=params)
+        return self.client.cancel_order(order["info"]["orderId"], market, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -454,9 +451,9 @@ class WrappedGenericExchange:
         # Getting the price
         if price is None:
             if side == "buy":
-                price = self.exchange.fetch_ticker(market)["bid"]
+                price = self.client.fetch_ticker(market)["bid"]
             else:
-                price = self.exchange.fetch_ticker(market)["ask"]
+                price = self.client.fetch_ticker(market)["ask"]
 
         # Parsing size_type & size
         if size_type == "currency_2_amount":
@@ -502,7 +499,7 @@ class WrappedGenericExchange:
         if size <= 0:
             return {}
 
-        return self.exchange.create_order(symbol=market, type="market", side=side, amount=size, params=params)
+        return self.client.create_order(symbol=market, type="market", side=side, amount=size, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -523,7 +520,7 @@ class WrappedGenericExchange:
         if size <= 0:
             return {}
 
-        return self.exchange.create_order(symbol=market, type="limit", side=side, amount=size, price=price,
+        return self.client.create_order(symbol=market, type="limit", side=side, amount=size, price=price,
                                           params=params)
 
     @only_authenticated
@@ -547,7 +544,7 @@ class WrappedGenericExchange:
 
         params.update({"stopPrice": price})
 
-        return self.exchange.create_order(symbol=market, type="stop", side=side, amount=size, price=price,
+        return self.client.create_order(symbol=market, type="stop", side=side, amount=size, price=price,
                                           params=params)
 
     @only_authenticated
@@ -571,7 +568,7 @@ class WrappedGenericExchange:
 
         params.update({"triggerPrice": price})
 
-        return self.exchange.create_order(symbol=market, type='takeProfit', side=side, amount=size,
+        return self.client.create_order(symbol=market, type='takeProfit', side=side, amount=size,
                                           params=params)
 
 
@@ -634,7 +631,7 @@ class WrappedFtxClient(WrappedGenericExchange):
         if params is None:
             params = {}
         params.update({'method': 'privateGetOrdersOrderId'})
-        return self.exchange.fetch_order(order_id, market, params=params)
+        return self.client.fetch_order(order_id, market, params=params)
 
     # Override
     @only_authenticated
@@ -656,7 +653,7 @@ class WrappedFtxClient(WrappedGenericExchange):
         else:
             params.update({'method': 'privateDeleteOrdersOrderId'})
 
-        return self.exchange.cancel_order(order_id, market, params=params)
+        return self.client.cancel_order(order_id, market, params=params)
 
     # Override
     @only_authenticated
@@ -677,7 +674,7 @@ class WrappedFtxClient(WrappedGenericExchange):
         else:
             params.update({'method': 'privateDeleteOrdersOrderId'})
 
-        return self.exchange.cancel_order(order["info"]["orderId"], market, params=params)
+        return self.client.cancel_order(order["info"]["orderId"], market, params=params)
     
 
 class WrappedBinanceClient(WrappedGenericExchange):
@@ -694,4 +691,4 @@ class WrappedBinanceClient(WrappedGenericExchange):
         super().__init__(ccxt.binance)
         self.instantiate_client(api_key, api_secret, enable_rate_limit)
         if testnet:
-            self.exchange.set_sandbox_mode(True)
+            self.client.set_sandbox_mode(True)

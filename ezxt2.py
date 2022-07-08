@@ -287,7 +287,7 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        balances = self.exchange.fetch_balance(params=params)
+        balances = self.client.fetch_balance(params=params)
         balance = balances.get(token, {})
         free = balance.get('free', 0)
         return float(free)
@@ -304,7 +304,7 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        balances = self.exchange.fetch_balance(params=params)
+        balances = self.client.fetch_balance(params=params)
         balance = balances.get(token, {})
         free = balance.get('total', 0)
         return float(free)
@@ -321,7 +321,7 @@ class WrappedGenericExchange:
         """
         if params is None:
             params = {}
-        return self.exchange.fetch_order(order_id, market, params=params)
+        return self.client.fetch_order(order_id, market, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -377,7 +377,7 @@ class WrappedGenericExchange:
 
         if params is None:
             params = {}
-        return self.client.cancel_order(order["info"]["orderId"], market, params=params)
+        return self.client.cancel_order(order["info"]["id"], market, params=params)
 
     @only_authenticated
     @only_implemented_types
@@ -394,14 +394,7 @@ class WrappedGenericExchange:
             params = {}
         order = self.get_order(order_id, market, params=params)
 
-        if order["info"]["remaining"] == 0:
-            return "filled"
-        elif order["info"]["status"] == "open":
-            return "open"
-        elif order["info"]["status"] == "canceled":
-            return "canceled"
-
-        return "unknown, please report this issue"
+        return order["info"]["status"]
 
     @only_authenticated
     @only_implemented_types
@@ -412,14 +405,7 @@ class WrappedGenericExchange:
         :return: the status
         """
 
-        if order["info"]["remaining"] == 0:
-            return "filled"
-        elif order["info"]["status"] == "open":
-            return "open"
-        elif order["info"]["status"] == "canceled":
-            return "canceled"
-
-        return "unknown, please report this issue"
+        return order["info"]["status"]
 
     @only_authenticated
     @only_implemented_types
@@ -674,7 +660,7 @@ class WrappedFtxClient(WrappedGenericExchange):
         else:
             params.update({'method': 'privateDeleteOrdersOrderId'})
 
-        return self.client.cancel_order(order["info"]["orderId"], market, params=params)
+        return self.client.cancel_order(order["info"]["id"], market, params=params)
     
 
 class WrappedBinanceClient(WrappedGenericExchange):

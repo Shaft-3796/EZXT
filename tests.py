@@ -1,9 +1,9 @@
 import time
-import ezxt2
-from ezxt2 import Colors
+import ezxt
+from ezxt import Colors
 
 """
-This module contains a set of unit tests functions for ezxt2.py
+This module contains a set of tests functions for ezxt.py
 """
 
 
@@ -107,5 +107,5 @@ class UnitTest:
         print(f"{Colors.GREEN}✅ cancel orders")
 
 
-ut = UnitTest(ezxt2.WrappedBinanceClient(), market="BTC/USDT")
+ut = UnitTest(ezxt.WrappedBinanceClient(), market="BTC/USDT")
 ut.public_test()

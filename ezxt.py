@@ -323,7 +323,7 @@ class WrappedGenericExchange:
     # Public API - Multithreading dl & ohlcv file saving
     # Do not use __download__ & __load__ use load_ohlcv instead
     def __download__(self, market: str, timeframe: str, since: (str, int, NoneType), limit: (int, NoneType),
-                     download_size: int):
+                     output: bool, download_size: int):
         """
         Please do not use this method directly use load_ohlcv instead
         """
